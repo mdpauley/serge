@@ -26,9 +26,6 @@ ENV CMAKE_ARGS="-DLLAMA_CUBLAS=ON -DLLAMA_NATIVE=ON -DLLAMA_FMA=OFF -DLLAMA_F16C
 RUN apt-get update \
     && apt-get install -y --no-install-recommends python3 python3-pip build-essential
 
-# Install llama-cpp-python
-RUN pip wheel llama-cpp-python --wheel-dir=/usr/local/bin/wheels
-
 # ---------------------------------------
 # Runtime environment
 FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04 as release
