@@ -4,7 +4,7 @@ FROM ghcr.io/dragonflydb/dragonfly:v1.7.1 as dragonfly
 
 # ---------------------------------------
 # Build frontend
-FROM node:19-bullseye-slim as frontend
+FROM node:20-bookworm-slim as frontend
 
 WORKDIR /usr/src/app
 COPY ./web/package.json ./web/package-lock.json ./
@@ -17,7 +17,6 @@ RUN npm run build
 # ---------------------------------------
 # Build environment
 FROM nvidia/cuda:12.2.0-devel-ubuntu22.04 as build
-FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04 as release
 
 # We need to set the host to 0.0.0.0 to allow outside access
 ENV HOST 0.0.0.0
@@ -44,14 +43,18 @@ ENV LLAMA_CUBLAS=1
 
 # setting build related env vars
 ENV CUDA_DOCKER_ARCH=all
-ENV LLAMA_CUBLAS=1
+ENV CMAKE_ARGS="-DLLAMA_CUBLAS=ON -DLLAMA_NATIVE=ON -DLLAMA_FMA=OFF -DLLAMA_F16C=OFF -DLLAMA_AVX2=OFF"
+
 
 # Install depencencies
 RUN python3 -m pip install --upgrade pip pytest cmake scikit-build setuptools fastapi uvicorn sse-starlette pydantic-settings starlette-context
 
 # Install llama-cpp-python (build with cuda)
-RUN CMAKE_ARGS="-DLLAMA_CUBLAS=ON -DLLAMA_NATIVE=ON -DLLAMA_FMA=OFF -DLLAMA_F16C=OFF -DLLAMA_AVX2=OFF" pip install llama-cpp-python
+RUN pip install --no-index --find-links=/usr/local/bin/wheels llama-cpp-python
 
+# ---------------------------------------
+# Runtime environment
+FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04 as release
 
 WORKDIR /usr/src/app
 
@@ -64,8 +67,7 @@ COPY scripts/deploy.sh /usr/src/app/deploy.sh
 
 
 # Install api dependencies
-RUN apt-get update \
-    pip install --no-cache-dir ./api \
+RUN pip install --no-cache-dir ./api \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* \
     && chmod 755 /usr/src/app/deploy.sh /usr/local/bin/dragonfly
 
