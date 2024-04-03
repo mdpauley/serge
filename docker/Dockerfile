@@ -32,6 +32,7 @@ RUN pip wheel llama-cpp-python --wheel-dir=/usr/local/bin/wheels
 # ---------------------------------------
 # Runtime environment
 FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04 as release
+FROM ghcr.io/abetlen/llama-cpp-python:v0.2.50 as release
 
 # Set ENV
 ENV NODE_ENV='production'
@@ -53,8 +54,6 @@ RUN apt-get update \
     && pip install --no-cache-dir ./api \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* \
     && chmod 755 /usr/src/app/deploy.sh /usr/local/bin/dragonfly
-
-RUN pip install llama-cpp-python==0.2.50
 
 EXPOSE 8008
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
