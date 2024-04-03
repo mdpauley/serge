@@ -17,6 +17,7 @@ RUN npm run build
 # ---------------------------------------
 # Build environment
 FROM nvidia/cuda:12.2.0-devel-ubuntu22.04 as build
+FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04 as release
 
 # We need to set the host to 0.0.0.0 to allow outside access
 ENV HOST 0.0.0.0
@@ -49,7 +50,7 @@ ENV LLAMA_CUBLAS=1
 RUN python3 -m pip install --upgrade pip pytest cmake scikit-build setuptools fastapi uvicorn sse-starlette pydantic-settings starlette-context
 
 # Install llama-cpp-python (build with cuda)
-RUN CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip install llama-cpp-python
+RUN CMAKE_ARGS="-DLLAMA_CUBLAS=ON -DLLAMA_NATIVE=ON -DLLAMA_FMA=OFF -DLLAMA_F16C=OFF -DLLAMA_AVX2=OFF" pip install llama-cpp-python
 
 
 WORKDIR /usr/src/app
