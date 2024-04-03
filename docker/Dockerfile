@@ -18,22 +18,39 @@ RUN npm run build
 # Build environment
 FROM nvidia/cuda:12.2.0-devel-ubuntu22.04 as build
 
-# Set ENV
-ENV FORCE_CMAKE=1
-ENV CMAKE_ARGS="-DLLAMA_CUBLAS=ON -DLLAMA_NATIVE=ON -DLLAMA_FMA=OFF -DLLAMA_F16C=OFF -DLLAMA_AVX2=OFF"
+# We need to set the host to 0.0.0.0 to allow outside access
+ENV HOST 0.0.0.0
 
-# Install api dependencies
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends python3 python3-pip build-essential
+# Install dependencies
+RUN apt-get update && apt-get upgrade -y \
+    && apt-get install -y git build-essential \
+    python3 python3-pip gcc wget \
+    ocl-icd-opencl-dev opencl-headers clinfo \
+    libclblast-dev libopenblas-dev \
+    libxml2 dumb-init \
+    && mkdir -p /etc/OpenCL/vendors && echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd
 
-# ---------------------------------------
-# Runtime environment
-FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04 as release
-FROM ghcr.io/abetlen/llama-cpp-python:v0.2.58 as llama_release
+COPY . .
+
 
 # Set ENV
 ENV NODE_ENV='production'
-ENV TZ=Etc/EDT
+ENV TZ=Etc/EDT 
+
+ENV FORCE_CMAKE=1
+ENV CUDA_DOCKER_ARCH=all
+ENV LLAMA_CUBLAS=1
+
+# setting build related env vars
+ENV CUDA_DOCKER_ARCH=all
+ENV LLAMA_CUBLAS=1
+
+# Install depencencies
+RUN python3 -m pip install --upgrade pip pytest cmake scikit-build setuptools fastapi uvicorn sse-starlette pydantic-settings starlette-context
+
+# Install llama-cpp-python (build with cuda)
+RUN CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip install llama-cpp-python
+
 
 WORKDIR /usr/src/app
 
@@ -47,8 +64,7 @@ COPY scripts/deploy.sh /usr/src/app/deploy.sh
 
 # Install api dependencies
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends python3 python3-pip libxml2 build-essential dumb-init \
-    && pip install --no-cache-dir ./api \
+    pip install --no-cache-dir ./api \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* \
     && chmod 755 /usr/src/app/deploy.sh /usr/local/bin/dragonfly
 
