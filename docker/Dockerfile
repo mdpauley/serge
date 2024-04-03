@@ -6,11 +6,13 @@ FROM ghcr.io/dragonflydb/dragonfly:v1.7.1 as dragonfly
 # Build frontend
 FROM node:20-bookworm-slim as frontend
 
+RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
-COPY ./web/package.json ./web/package-lock.json ./
+COPY ./web/package.json /usr/src/app
+COPY ./web/package-lock.json /usr/src/app
 RUN npm ci
 
-COPY ./web /usr/src/app/web/
+COPY ./web/ /usr/src/app/
 WORKDIR /usr/src/app/web/
 RUN npm run build
 
@@ -28,6 +30,7 @@ RUN apt-get update && apt-get upgrade -y \
     ocl-icd-opencl-dev opencl-headers clinfo \
     libclblast-dev libopenblas-dev \
     libxml2 dumb-init \
+    libnvidia-opencl-dev \
     && mkdir -p /etc/OpenCL/vendors && echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd
 
 COPY . .
@@ -62,8 +65,8 @@ WORKDIR /usr/src/app
 COPY --from=dragonfly /usr/local/bin/dragonfly /usr/local/bin/dragonfly
 COPY --from=frontend /usr/src/app/web/build /usr/src/app/api/static/
 COPY --from=build /usr/local/bin/wheels /usr/local/bin/wheels
-COPY ./api /usr/src/app/api
-COPY scripts/deploy.sh /usr/src/app/deploy.sh
+ADD ./api /usr/src/app/
+ADD ./scripts/deploy.sh /usr/src/app/
 
 
 # Install api dependencies
