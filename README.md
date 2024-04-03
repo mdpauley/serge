@@ -22,14 +22,14 @@ docker run -d \
     -v weights:/usr/src/app/weights \
     -v datadb:/data/db/ \
     -p 8008:8008 \
-    ghcr.io/serge-chat/serge:latest
+    ghcr.io/mdpauley/serge:latest
 ```
 
 🐙 Docker Compose:
 ```yaml
 services:
   serge:
-    image: ghcr.io/serge-chat/serge:latest
+    image: ghcr.io/mdpauley/serge:latest
     container_name: serge
     restart: unless-stopped
     ports:
