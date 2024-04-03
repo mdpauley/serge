@@ -29,7 +29,7 @@ RUN apt-get update \
 # ---------------------------------------
 # Runtime environment
 FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04 as release
-FROM ghcr.io/abetlen/llama-cpp-python:v0.2.50 as release
+FROM ghcr.io/abetlen/llama-cpp-python:v0.2.58 as llama_release
 
 # Set ENV
 ENV NODE_ENV='production'
