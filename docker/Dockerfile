@@ -54,7 +54,7 @@ RUN apt-get update \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* \
     && chmod 755 /usr/src/app/deploy.sh /usr/local/bin/dragonfly
 
-RUN pip install --no-index --find-links=/usr/local/bin/wheels llama-cpp-python
+RUN pip install llama-cpp-python==0.2.50
 
 EXPOSE 8008
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
